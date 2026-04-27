@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mesrab">
+<meta name="theme-color" content="#3C3C3C">
+<title>Mesrab · مِسْرَاب</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Tokens ── */
+:root {
+  --brown:      #3C3C3C;
+  --beige:      #F5F5DC;
+  --gold:       #fef7f2;
+  --gold-mid:   #C8A96E;
+  --cream:      #FAF8F3;
+  --white:      #FFFFFF;
+  --muted:      #6B6560;
+  --border:     rgba(60,60,60,0.13);
+  --success:    #3D6B4F;
+  --danger:     #8B3A3A;
+  --amber-text: #7A5A28;
+  --radius:     16px;
+  --radius-sm:  10px;
+}
+
+/* ── Base — mobile-first ── */
+html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  background: var(--cream);
+  color: var(--brown);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
+  /* safe-area for iPhone notch / home indicator */
+  padding-bottom: env(safe-area-inset-bottom, 24px);
+}
+
+/* ── Sticky Header ── */
+.header {
+  background: var(--brown);
+  padding: 16px 20px 14px;
+  padding-top: calc(16px + env(safe-area-inset-top, 0px));
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+}
+.header h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 2rem;          /* 32px */
+  color: var(--gold);
+  letter-spacing: 5px;
+  line-height: 1.1;
+}
+.header .arabic {
+  color: var(--gold-mid);
+  font-size: 1rem;          /* 16px */
+  font-weight: 300;
+  margin-top: 2px;
+  letter-spacing: 1px;
+}
+.header .badge {
+  display: inline-block;
+  background: var(--gold-mid);
+  color: var(--brown);
+  font-size: 0.625rem;      /* 10px */
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 4px 14px;
+  border-radius: 20px;
+  margin-top: 8px;
+}
+
+/* ── Page wrapper ── */
+.page {
+  width: 100%;
+  max-width: 480px;         /* caps on wide screens, fills iPhone */
+  margin: 0 auto;
+  padding: 0 16px 40px;
+}
+
+/* ── Section label ── */
+.slabel {
+  font-size: 0.6875rem;     /* 11px */
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 28px 0 12px;
+}
+
+/* ── KPI Cards ── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.kpi-card {
+  background: var(--white);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 8px 12px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+}
+.kpi-card.c-revenue::before { background: var(--brown); }
+.kpi-card.c-profit::before  { background: var(--success); }
+.kpi-card.c-roi::before     { background: var(--gold-mid); }
+
+.kpi-lbl {
+  font-size: 0.625rem;      /* 10px */
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.kpi-val {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.5rem;        /* 24px */
+  line-height: 1;
+  color: var(--brown);
+  word-break: break-all;
+}
+.kpi-val.green { color: var(--success); }
+.kpi-unit {
+  font-size: 0.6875rem;     /* 11px */
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+/* ── Cost Cards ── */
+.cost-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.cost-card {
+  background: var(--gold);
+  border: 0.5px solid rgba(200,169,110,0.4);
+  border-radius: var(--radius-sm);
+  padding: 12px 8px;
+  text-align: center;
+}
+.cost-lbl {
+  font-size: 0.5625rem;     /* 9px */
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+.cost-val {
+  font-size: 1rem;          /* 16px */
+  font-weight: 700;
+  color: var(--brown);
+}
+
+/* ── Chart Cards ── */
+.chart-card {
+  background: var(--white);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 14px;
+  margin-bottom: 12px;
+  width: 100%;
+}
+.chart-title {
+  font-size: 0.6875rem;     /* 11px */
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+
+/* ── Legend ── */
+.legend {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;       /* 12px */
+  color: var(--muted);
+}
+.ldot {
+  width: 10px; height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* ── Table ── */
+.table-wrap {
+  width: 100%;
+  background: var(--white);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+/* horizontal scroll on very small screens */
+.table-scroll { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+table {
+  width: 100%;
+  min-width: 360px;
+  border-collapse: collapse;
+  font-size: 0.8125rem;     /* 13px */
+}
+thead tr { background: var(--brown); }
+thead th {
+  color: var(--beige);
+  font-weight: 600;
+  font-size: 0.5625rem;     /* 9px */
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+  padding: 11px 10px;
+  text-align: right;
+  white-space: nowrap;
+}
+thead th:first-child { text-align: left; }
+
+tbody td {
+  padding: 10px 10px;
+  border-bottom: 0.5px solid var(--border);
+  text-align: right;
+  color: var(--brown);
+  font-size: 0.8125rem;
+}
+tbody td:first-child { text-align: left; font-weight: 500; }
+tbody tr:nth-child(even) td { background: rgba(245,245,220,0.28); }
+tbody tr:last-child td { border-bottom: none; }
+
+.total-row td {
+  background: var(--gold) !important;
+  font-weight: 700;
+  color: var(--brown);
+}
+
+/* ── Pills ── */
+.pill {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 12px;
+  font-size: 0.625rem;      /* 10px */
+  font-weight: 700;
+  white-space: nowrap;
+}
+.p-green { background: rgba(61,107,79,0.12); color: var(--success); }
+.p-amber { background: rgba(200,169,110,0.22); color: var(--amber-text); }
+.p-red   { background: rgba(139,58,58,0.12);  color: var(--danger); }
+
+/* ── Footer ── */
+.footer {
+  text-align: center;
+  margin-top: 40px;
+  font-size: 0.625rem;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+/* ── Larger phones (≥ 390px) ── */
+@media (min-width: 390px) {
+  .kpi-val { font-size: 1.75rem; }
+  .cost-val { font-size: 1.0625rem; }
+  tbody td { font-size: 0.875rem; }
+}
+
+/* ── Tablets / desktop — just center + cap width ── */
+@media (min-width: 600px) {
+  .header h1 { font-size: 2.25rem; }
+  .kpi-val   { font-size: 2rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Sticky Header ── -->
+<div class="header">
+  <h1>MESRAB</h1>
+  <div class="arabic">مِسْرَاب · Coffee Brand</div>
+  <div class="badge">Financial Dashboard</div>
+</div>
+
+<div class="page">
+
+  <!-- KPIs -->
+  <div class="slabel">Executive Overview</div>
+  <div class="kpi-grid">
+    <div class="kpi-card c-revenue">
+      <div class="kpi-lbl">Revenue</div>
+      <div class="kpi-val">7,136</div>
+      <div class="kpi-unit">SAR</div>
+    </div>
+    <div class="kpi-card c-profit">
+      <div class="kpi-lbl">Net Profit</div>
+      <div class="kpi-val green" id="kProfit">—</div>
+      <div class="kpi-unit">SAR</div>
+    </div>
+    <div class="kpi-card c-roi">
+      <div class="kpi-lbl">ROI</div>
+      <div class="kpi-val" id="kROI">—</div>
+      <div class="kpi-unit">%</div>
+    </div>
+  </div>
+
+  <!-- Cost breakdown -->
+  <div class="slabel">Cost Breakdown</div>
+  <div class="cost-grid">
+    <div class="cost-card">
+      <div class="cost-lbl">COGS</div>
+      <div class="cost-val" id="cCOGS">—</div>
+    </div>
+    <div class="cost-card">
+      <div class="cost-lbl">Supplies</div>
+      <div class="cost-val">400 SAR</div>
+    </div>
+    <div class="cost-card">
+      <div class="cost-lbl">Total Costs</div>
+      <div class="cost-val" id="cTotal">—</div>
+    </div>
+  </div>
+
+  <!-- Donut -->
+  <div class="slabel">Revenue Sources</div>
+  <div class="chart-card">
+    <div class="chart-title">Catering vs Website</div>
+    <div style="position:relative;width:100%;height:230px;">
+      <canvas id="donut" role="img" aria-label="Revenue split: Catering 4800 SAR 67%, Website 2336 SAR 33%">Catering: 4800 SAR. Website: 2336 SAR.</canvas>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><div class="ldot" style="background:#3C3C3C"></div>Catering · 4,800 SAR · 67%</div>
+      <div class="legend-item"><div class="ldot" style="background:#C8A96E"></div>Website · 2,336 SAR · 33%</div>
+    </div>
+  </div>
+
+  <!-- Bar -->
+  <div class="slabel">Inventory Flow</div>
+  <div class="chart-card">
+    <div class="chart-title">Units per Product</div>
+    <div class="legend" style="justify-content:flex-start;margin-bottom:12px;margin-top:0;">
+      <div class="legend-item"><div class="ldot" style="background:#3C3C3C"></div>Online</div>
+      <div class="legend-item"><div class="ldot" style="background:#C8A96E"></div>Catering</div>
+      <div class="legend-item"><div class="ldot" style="background:#E8E4DA"></div>Stock</div>
+    </div>
+    <div style="position:relative;width:100%;height:300px;">
+      <canvas id="bar" role="img" aria-label="Stacked horizontal bar chart: inventory per product">Inventory flow for 7 products.</canvas>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="slabel">Product Summary</div>
+  <div class="table-wrap">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Cost</th>
+            <th>Online</th>
+            <th>Catering</th>
+            <th>Stock</th>
+            <th>COGS</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="footer">Mesrab Coffee · مِسْرَاب · Financial Dashboard</div>
+</div>
+
+<script>
+/* ── Data ── */
+const products = ['Goji','Chrome','Choco (Katy)','Luna','Grape','Slushy','Colado'];
+const costs    = [27.31,27.31,17.54,26.45,28.75,28.75,40.25];
+const online   = [6,8,12,6,14,9,3];
+const catering = [13,10,2,5,3,9,1];
+const stock    = [1,2,6,9,3,2,0];
+
+const REVENUE  = 7136;
+const SUPPLIES = 400;
+
+const cogs      = costs.map((_,i) => (online[i]+catering[i]) * costs[i]);
+const COGS_TOT  = cogs.reduce((a,b)=>a+b, 0);
+const COSTS_TOT = COGS_TOT + SUPPLIES;
+const PROFIT    = REVENUE - COSTS_TOT;
+const ROI       = (PROFIT / COSTS_TOT) * 100;
+
+/* ── KPI fill ── */
+document.getElementById('kProfit').textContent = Math.round(PROFIT).toLocaleString();
+document.getElementById('kROI').textContent    = ROI.toFixed(1);
+document.getElementById('cCOGS').textContent   = Math.round(COGS_TOT).toLocaleString() + ' SAR';
+document.getElementById('cTotal').textContent  = Math.round(COSTS_TOT).toLocaleString() + ' SAR';
+
+/* ── Table ── */
+const tbody = document.getElementById('tbody');
+const pillOf = s => s===0 ? ['p-red','Out'] : s<=2 ? ['p-amber','Low'] : ['p-green','OK'];
+
+products.forEach((p,i) => {
+  const [cls,lbl] = pillOf(stock[i]);
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${p}</td>
+    <td>${costs[i].toFixed(2)}</td>
+    <td>${online[i]}</td>
+    <td>${catering[i]}</td>
+    <td>${stock[i]}</td>
+    <td>${Math.round(cogs[i]).toLocaleString()}</td>
+    <td><span class="pill ${cls}">${lbl}</span></td>`;
+  tbody.appendChild(tr);
+});
+
+const sum = arr => arr.reduce((a,b)=>a+b,0);
+const tot = document.createElement('tr');
+tot.className = 'total-row';
+tot.innerHTML = `
+  <td>Total</td><td>—</td>
+  <td>${sum(online)}</td><td>${sum(catering)}</td><td>${sum(stock)}</td>
+  <td>${Math.round(COGS_TOT).toLocaleString()}</td><td></td>`;
+tbody.appendChild(tot);
+
+/* ── Donut ── */
+new Chart(document.getElementById('donut'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Catering','Website'],
+    datasets: [{
+      data: [4800, 2336],
+      backgroundColor: ['#3C3C3C','#C8A96E'],
+      borderWidth: 3,
+      borderColor: '#FFFFFF',
+      hoverOffset: 8,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '70%',
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed.toLocaleString()} SAR` } }
+    }
+  }
+});
+
+/* ── Bar ── */
+new Chart(document.getElementById('bar'), {
+  type: 'bar',
+  data: {
+    labels: products,
+    datasets: [
+      { label:'Online',   data: online,   backgroundColor:'#3C3C3C', borderRadius:3 },
+      { label:'Catering', data: catering, backgroundColor:'#C8A96E', borderRadius:3 },
+      { label:'Stock',    data: stock,    backgroundColor:'#E8E4DA', borderRadius:3 },
+    ]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.x} units` } }
+    },
+    scales: {
+      x: {
+        stacked: true,
+        grid: { color: 'rgba(60,60,60,0.07)' },
+        ticks: { color:'#6B6560', font:{ size:11, family:'Inter, -apple-system, sans-serif' } }
+      },
+      y: {
+        stacked: true,
+        grid: { display: false },
+        ticks: {
+          color:'#3C3C3C',
+          font:{ size:12, weight:'600', family:'Inter, -apple-system, sans-serif' }
+        }
+      }
+    }
+  }
+});
+</script>
+</body>
+</html>
